@@ -35,7 +35,7 @@ jobs:
     - name: Build & push Docker image
       uses: mr-smithers-excellent/docker-build-push@v5
       with:
-        image: cr-cn-beijing.volces.com/cloudnative/demo-app
+        image: cloudnative/demo-app
         tags: v1
         registry: cr-cn-beijing.volces.com
         dockerfile: Dockerfile
