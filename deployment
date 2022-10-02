@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+      - image: cr-cn-beijing.volces.com/cloudnative/demo-app:v1
+        imagePullPolicy: IfNotPresent
+        name: demo
