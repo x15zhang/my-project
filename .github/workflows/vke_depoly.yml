@@ -1,0 +1,51 @@
+
+name: Volcano Kubernetes Engine
+
+on:
+  push:
+    branches: [ "main" ]
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  IMAGE_URL: cr-cn-beijing.volces.com/cloudnative/demo-app
+  REGION: cn-beijing
+  CLUSTER_ID: ccbhq0cnqtofrgioh4p5g
+  DEPLOYMENT_NAME: demo-app
+
+permissions:
+  contents: read
+
+jobs:
+  setup-build-publish-deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Set up Kustomize
+      run: |
+        curl -o kustomize --location https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
+        chmod u+x ./kustomize
+
+    - name: Set up ~/.kube/config for connecting VKE cluster
+      uses: TencentCloud/tke-cluster-credential-action@v1
+      with:
+        secret_id: ${{ secrets.VOLCANO_CLOUD_SECRET_ID }}
+        secret_key: ${{ secrets.VOLCANO_CLOUD_SECRET_KEY }}
+        tke_region: ${{ env.REGION }}
+        cluster_id: ${{ env.CLUSTER_ID }}
+    
+    - name: Switch to VKE context
+      run: |
+        kubectl config use-context ${CLUSTER_ID}-context-default
+
+    # Deploy the Docker image to the VKE cluster
+    - name: Deploy
+      run: |
+        ./kustomize edit set image ${IMAGE_URL}:v1
+        ./kustomize build . | kubectl apply -f -
+        kubectl rollout status deployment/${DEPLOYMENT_NAME}
+        kubectl get services -o wide
